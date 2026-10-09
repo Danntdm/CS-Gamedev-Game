@@ -14,9 +14,11 @@ GameObject:
   - component: {fileID: 7341581376173475415}
   - component: {fileID: 7650930750670116596}
   - component: {fileID: 5447060391728823434}
-  m_Layer: 0
+  - component: {fileID: 5306381343562154453}
+  - component: {fileID: 9207553111355865820}
+  m_Layer: 8
   m_Name: Enemy
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -138,8 +140,8 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 0
+  m_UseGravity: 0
+  m_IsKinematic: 1
   m_Interpolate: 1
   m_Constraints: 80
   m_CollisionDetection: 0
@@ -155,9 +157,49 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3f38e46de9749f4285da3a2e7f96e49, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyController
-  moveSpeed: 3
-  stoppingDistance: 1.5
-  maxHealth: 30
+  maxHealth: 20
   contactDamage: 10
   damageInterval: 1
   pilotDetectionRange: 25
+  pathUpdateInterval: 0.4
+  flankerChance: 30
+  minimumFlankRadius: 3
+  maximumFlankRadius: 7
+  directAttackDistance: 2.5
+--- !u!114 &5306381343562154453
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2388789301754432172}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f85684c9fb944834ca7cc9766deaf116, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyHealthDrop
+  healthPickupPrefab: {fileID: 6385663958020303829, guid: 070f313ac3314d24ea27f7fdefff5722, type: 3}
+  dropChance: 15
+  spawnHeight: 0.5
+--- !u!195 &9207553111355865820
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2388789301754432172}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 0.25
+  m_Speed: 10
+  m_Acceleration: 60
+  avoidancePriority: 50
+  m_AngularSpeed: 720
+  m_StoppingDistance: 0.5
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 0
+  m_AutoRepath: 1
+  m_Height: 2
+  m_BaseOffset: 1
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 1

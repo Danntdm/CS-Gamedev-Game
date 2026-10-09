@@ -1,13 +1,11 @@
 
 using UnityEngine;
+using UnityEngine.AI;
 
+[RequireComponent(typeof(NavMeshAgent))]
 [RequireComponent(typeof(Rigidbody))]
 public class EnemyController : MonoBehaviour
 {
-    [Header("Movement")]
-    public float moveSpeed = 4f;
-    public float stoppingDistance = 0.5f;
-
     [Header("Health")]
     public float maxHealth = 30f;
 
@@ -17,28 +15,73 @@ public class EnemyController : MonoBehaviour
 
     [Header("Targeting")]
     public float pilotDetectionRange = 25f;
+    public float pathUpdateInterval = 0.4f;
+
+    [Header("Surrounding Behavior")]
+    [Range(0f, 100f)]
+    public float flankerChance = 30f;
+
+    public float minimumFlankRadius = 3f;
+    public float maximumFlankRadius = 7f;
+    public float directAttackDistance = 2.5f;
 
     private float currentHealth;
     private float nextDamageTime;
+    private float nextPathUpdateTime;
+    private bool isDead;
 
     private Rigidbody rb;
+    private NavMeshAgent agent;
+    private EnemyHealthDrop healthDrop;
+
     private Transform mecha;
     private Transform pilot;
     private Transform currentTarget;
 
-    void Start()
+    private bool isFlanker;
+    private Vector3 flankOffset;
+
+    void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        agent = GetComponent<NavMeshAgent>();
+        healthDrop = GetComponent<EnemyHealthDrop>();
+
+        rb.isKinematic = true;
+        rb.useGravity = false;
+
+        agent.updateRotation = false;
+
+        // Assign a behavior to this enemy.
+        isFlanker = Random.Range(0f, 100f) < flankerChance;
+
+        if (isFlanker)
+        {
+            float angle = Random.Range(0f, Mathf.PI * 2f);
+
+            float radius = Random.Range(
+                minimumFlankRadius,
+                maximumFlankRadius
+            );
+
+            flankOffset = new Vector3(
+                Mathf.Cos(angle) * radius,
+                0f,
+                Mathf.Sin(angle) * radius
+            );
+        }
+    }
+
+    void Start()
+    {
         currentHealth = maxHealth;
 
-        // Find the mech using its Player tag.
         GameObject mechaObject =
             GameObject.FindGameObjectWithTag("Player");
 
         if (mechaObject != null)
             mecha = mechaObject.transform;
 
-        // Find the pilot by its movement component.
         PilotMovement pilotMovement =
             FindFirstObjectByType<PilotMovement>(
                 FindObjectsInactive.Include
@@ -50,16 +93,17 @@ public class EnemyController : MonoBehaviour
 
     void Update()
     {
+        if (isDead)
+            return;
+
         SelectTarget();
+        UpdatePath();
     }
 
     void SelectTarget()
     {
-        // Default target is the mech.
         currentTarget = mecha;
 
-        // Prioritize the pilot when outside the mech
-        // and within detection range.
         if (pilot != null && pilot.gameObject.activeInHierarchy)
         {
             float distanceToPilot = Vector3.Distance(
@@ -68,30 +112,46 @@ public class EnemyController : MonoBehaviour
             );
 
             if (distanceToPilot <= pilotDetectionRange)
-            {
                 currentTarget = pilot;
-            }
         }
     }
 
-    void FixedUpdate()
+    void UpdatePath()
     {
-        if (currentTarget == null)
+        if (currentTarget == null || !agent.isOnNavMesh)
             return;
 
-        Vector3 direction =
-            currentTarget.position - rb.position;
+        if (Time.time < nextPathUpdateTime)
+            return;
 
-        direction.y = 0f;
+        nextPathUpdateTime =
+            Time.time + pathUpdateInterval;
 
-        if (direction.magnitude > stoppingDistance)
+        Vector3 destination = currentTarget.position;
+
+        if (isFlanker)
         {
-            Vector3 movement =
-                direction.normalized *
-                moveSpeed *
-                Time.fixedDeltaTime;
+            float distanceToTarget = Vector3.Distance(
+                transform.position,
+                currentTarget.position
+            );
 
-            rb.MovePosition(rb.position + movement);
+            // Approach a position around the player.
+            if (distanceToTarget > directAttackDistance)
+            {
+                destination += flankOffset;
+            }
+        }
+
+        // Find a valid nearby point on the NavMesh.
+        if (NavMesh.SamplePosition(
+            destination,
+            out NavMeshHit hit,
+            3f,
+            NavMesh.AllAreas
+        ))
+        {
+            agent.SetDestination(hit.position);
         }
     }
 
@@ -107,11 +167,9 @@ public class EnemyController : MonoBehaviour
 
     void DealContactDamage(Collision collision)
     {
-        if (Time.time < nextDamageTime)
+        if (isDead || Time.time < nextDamageTime)
             return;
 
-        // Damage either the pilot or the mech
-        // if they have a PlayerHealth component.
         PlayerHealth health =
             collision.gameObject.GetComponentInParent<PlayerHealth>();
 
@@ -126,9 +184,25 @@ public class EnemyController : MonoBehaviour
 
     public void TakeDamage(float damage)
     {
+        if (isDead)
+            return;
+
         currentHealth -= damage;
 
         if (currentHealth <= 0f)
-            Destroy(gameObject);
+            Die();
+    }
+
+    void Die()
+    {
+        if (isDead)
+            return;
+
+        isDead = true;
+
+        if (healthDrop != null)
+            healthDrop.TryDropHealth();
+
+        Destroy(gameObject);
     }
 }
