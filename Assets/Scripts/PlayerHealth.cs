@@ -43,6 +43,23 @@ public class PlayerHealth : MonoBehaviour
         UpdateHealthBar();
     }
 
+    // Called when Armor Up is selected.
+    public void UpgradeArmor(float bonusHealth = 20f)
+    {
+        if (isDead)
+            return;
+
+        maxHealth += bonusHealth;
+        currentHealth += bonusHealth;
+
+        UpdateHealthBar();
+
+        Debug.Log(
+            "ARMOR UPGRADED! Maximum HP: " + maxHealth +
+            " | Current HP: " + currentHealth
+        );
+    }
+
     void UpdateHealthBar()
     {
         if (healthBar == null)
@@ -64,6 +81,7 @@ public class PlayerHealth : MonoBehaviour
             Debug.Log("PILOT KILLED!");
 
             PilotMovement movement = GetComponent<PilotMovement>();
+
             if (movement != null)
                 movement.enabled = false;
         }
@@ -72,18 +90,22 @@ public class PlayerHealth : MonoBehaviour
             Debug.Log("MECHA DESTROYED!");
 
             MechaMovement movement = GetComponent<MechaMovement>();
+
             if (movement != null)
                 movement.enabled = false;
 
             MechaAim aim = GetComponent<MechaAim>();
+
             if (aim != null)
                 aim.enabled = false;
 
             MechaWeapon weapon = GetComponent<MechaWeapon>();
+
             if (weapon != null)
                 weapon.enabled = false;
 
             MechaSentry sentry = GetComponent<MechaSentry>();
+
             if (sentry != null)
                 sentry.enabled = false;
         }
