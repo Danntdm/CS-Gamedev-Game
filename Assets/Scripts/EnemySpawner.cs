@@ -10,6 +10,7 @@ public class EnemySpawner : MonoBehaviour
 
     [Header("References")]
     public Transform player;
+    public BoxCollider spawnBounds;
 
     [Header("Starting Difficulty")]
     public float startingSpawnInterval = 2f;
@@ -20,8 +21,10 @@ public class EnemySpawner : MonoBehaviour
 
     [Header("Spawn Position")]
     public float spawnDistance = 20f;
+    public float minimumSpawnDistance = 12f;
     public float flyingSpawnHeight = 4f;
     public float navMeshSearchRadius = 8f;
+    public int maximumSpawnAttempts = 30;
 
     [Header("Gradual Difficulty Scaling")]
     public float spawnIntervalReductionPerMinute = 0.08f;
@@ -93,11 +96,8 @@ public class EnemySpawner : MonoBehaviour
             rangedEnemyPrefab == null)
             return;
 
-        // Spawn speed scales with the survival timer.
         spawnTimer += elapsed;
 
-        // Limit spawning to one enemy per frame, even
-        // when debug time is heavily accelerated.
         if (spawnTimer >= currentSpawnInterval)
         {
             spawnTimer -= currentSpawnInterval;
@@ -135,12 +135,10 @@ public class EnemySpawner : MonoBehaviour
         currentMinute = newMinute;
         currentDifficultyTier = newTier;
 
-        // Gradually reduce the time between spawns.
         float gradualSpawnInterval =
             startingSpawnInterval -
             currentMinute * spawnIntervalReductionPerMinute;
 
-        // Apply an additional reduction every spike.
         currentSpawnInterval = Mathf.Max(
             minimumSpawnInterval,
             gradualSpawnInterval *
@@ -150,7 +148,6 @@ public class EnemySpawner : MonoBehaviour
             )
         );
 
-        // Increase the number of active enemies allowed.
         currentMaxEnemies = Mathf.Clamp(
             startingMaxEnemies +
             currentMinute * maxEnemyIncreasePerMinute +
@@ -159,7 +156,6 @@ public class EnemySpawner : MonoBehaviour
             maximumEnemyCap
         );
 
-        // Increase the chance of spawning ranged enemies.
         currentRangedChance = Mathf.Clamp(
             startingRangedChance +
             currentMinute * rangedChanceIncreasePerMinute +
@@ -171,13 +167,21 @@ public class EnemySpawner : MonoBehaviour
 
     void SpawnEnemy()
     {
+        if (spawnBounds == null || !spawnBounds.enabled ||
+            !spawnBounds.gameObject.activeInHierarchy)
+        {
+            Debug.LogWarning(
+                "EnemySpawner: Assign an active EnemySpawnBounds BoxCollider."
+            );
+            return;
+        }
+
         bool spawnRanged =
             Random.Range(0f, 100f) < currentRangedChance;
 
         GameObject selectedPrefab =
             spawnRanged ? rangedEnemyPrefab : meleeEnemyPrefab;
 
-        // Fall back if one enemy type isn't assigned.
         if (selectedPrefab == null)
         {
             selectedPrefab =
@@ -187,51 +191,125 @@ public class EnemySpawner : MonoBehaviour
         if (selectedPrefab == null)
             return;
 
-        bool isRanged =
-            selectedPrefab == rangedEnemyPrefab;
+        bool isRanged = selectedPrefab == rangedEnemyPrefab;
 
-        Vector2 randomDirection =
-            Random.insideUnitCircle.normalized;
+        int attempts = Mathf.Max(1, maximumSpawnAttempts);
 
-        if (randomDirection.sqrMagnitude < 0.01f)
-            randomDirection = Vector2.right;
+        for (int i = 0; i < attempts; i++)
+        {
+            Vector2 direction = Random.insideUnitCircle.normalized;
 
-        Vector3 spawnPosition =
-            player.position +
-            new Vector3(
-                randomDirection.x * spawnDistance,
-                0f,
-                randomDirection.y * spawnDistance
+            if (direction.sqrMagnitude < 0.01f)
+                direction = Vector2.right;
+
+            float distance = Random.Range(
+                Mathf.Min(minimumSpawnDistance, spawnDistance),
+                Mathf.Max(minimumSpawnDistance, spawnDistance)
             );
+
+            Vector3 candidate =
+                player.position +
+                new Vector3(
+                    direction.x * distance,
+                    0f,
+                    direction.y * distance
+                );
+
+            if (!TryGetSpawnPosition(
+                candidate,
+                isRanged,
+                out Vector3 spawnPosition
+            ))
+            {
+                continue;
+            }
+
+            Instantiate(
+                selectedPrefab,
+                spawnPosition,
+                Quaternion.identity,
+                transform
+            );
+
+            return;
+        }
+    }
+
+    bool TryGetSpawnPosition(
+        Vector3 candidate,
+        bool isRanged,
+        out Vector3 spawnPosition
+    )
+    {
+        spawnPosition = candidate;
+
+        // Find walkable ground near the candidate.
+        if (!NavMesh.SamplePosition(
+            candidate,
+            out NavMeshHit hit,
+            navMeshSearchRadius,
+            NavMesh.AllAreas
+        ))
+        {
+            return false;
+        }
+
+        Vector3 groundPosition = hit.position;
+
+        // Check the actual NavMesh point, not just
+        // the original random candidate.
+        if (!IsInsideBounds(groundPosition))
+            return false;
+
+        // Avoid spawning too close to the player.
+        Vector2 playerXZ = new Vector2(
+            player.position.x,
+            player.position.z
+        );
+
+        Vector2 spawnXZ = new Vector2(
+            groundPosition.x,
+            groundPosition.z
+        );
+
+        if (Vector2.Distance(playerXZ, spawnXZ) <
+            minimumSpawnDistance)
+        {
+            return false;
+        }
 
         if (isRanged)
         {
-            spawnPosition.y =
-                player.position.y + flyingSpawnHeight;
+            spawnPosition =
+                groundPosition + Vector3.up * flyingSpawnHeight;
         }
         else
         {
-            if (NavMesh.SamplePosition(
-                spawnPosition,
-                out NavMeshHit hit,
-                navMeshSearchRadius,
-                NavMesh.AllAreas
-            ))
-            {
-                spawnPosition = hit.position;
-            }
-            else
-            {
-                return;
-            }
+            spawnPosition = groundPosition;
         }
 
-        Instantiate(
-            selectedPrefab,
-            spawnPosition,
-            Quaternion.identity,
-            transform
-        );
+        // Flying enemies must also fit inside the box.
+        if (!IsInsideBounds(spawnPosition))
+            return false;
+
+        return true;
+    }
+
+    bool IsInsideBounds(Vector3 worldPosition)
+    {
+        Vector3 localPosition =
+            spawnBounds.transform.InverseTransformPoint(
+                worldPosition
+            );
+
+        Vector3 center = spawnBounds.center;
+        Vector3 halfSize = spawnBounds.size * 0.5f;
+
+        Vector3 offset = localPosition - center;
+
+        return Mathf.Abs(offset.x) <= halfSize.x &&
+               Mathf.Abs(offset.y) <= halfSize.y &&
+               Mathf.Abs(offset.z) <= halfSize.z;
     }
 
     string FormatTime(float seconds)

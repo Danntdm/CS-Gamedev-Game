@@ -49,9 +49,12 @@ public class MechaMovement : MonoBehaviour
             1f
         );
 
-        rb.MovePosition(
-            rb.position +
-            direction * moveSpeed * Time.fixedDeltaTime
+        Vector3 velocity = rb.linearVelocity;
+
+        rb.linearVelocity = new Vector3(
+            direction.x * moveSpeed,
+            velocity.y,
+            direction.z * moveSpeed
         );
     }
 }

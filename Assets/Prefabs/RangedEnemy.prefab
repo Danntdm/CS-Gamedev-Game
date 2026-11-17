@@ -43,6 +43,7 @@ GameObject:
   - component: {fileID: 6058944081999347131}
   - component: {fileID: 6364821783919259303}
   - component: {fileID: 5245709406425552686}
+  - component: {fileID: 6684338911448052014}
   m_Layer: 0
   m_Name: RangedEnemy
   m_TagString: Untagged
@@ -127,6 +128,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RangedEnemyController
   maxHealth: 30
+  xpReward: 20
   moveSpeed: 6
   rotationSpeed: 5
   preferredDistance: 15
@@ -146,6 +148,21 @@ MonoBehaviour:
   firePoint: {fileID: 6271499890136773705}
   fireRate: 2
   shootingRange: 20
+--- !u!114 &6684338911448052014
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5773871924169601179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f85684c9fb944834ca7cc9766deaf116, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyHealthDrop
+  healthPickupPrefab: {fileID: 6385663958020303829, guid: 070f313ac3314d24ea27f7fdefff5722, type: 3}
+  dropChance: 25
+  spawnHeight: 0.5
 --- !u!1001 &2014217925377604965
 PrefabInstance:
   m_ObjectHideFlags: 0

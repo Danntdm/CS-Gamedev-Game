@@ -1,6 +1,8 @@
 
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
 
 public class PlayerHealth : MonoBehaviour
 {
@@ -13,13 +15,31 @@ public class PlayerHealth : MonoBehaviour
     [Header("UI")]
     public Slider healthBar;
 
+    [Header("Game Over")]
+    public GameObject gameOverPanel;
+
     private float currentHealth;
     private bool isDead;
+    private bool gameOver;
 
     void Start()
     {
+        Time.timeScale = 1f;
         currentHealth = maxHealth;
         UpdateHealthBar();
+
+        if (gameOverPanel != null)
+            gameOverPanel.SetActive(false);
+    }
+
+    void Update()
+    {
+        if (gameOver &&
+            Keyboard.current != null &&
+            Keyboard.current.rKey.wasPressedThisFrame)
+        {
+            RestartGame();
+        }
     }
 
     public void TakeDamage(float damage)
@@ -43,7 +63,6 @@ public class PlayerHealth : MonoBehaviour
         UpdateHealthBar();
     }
 
-    // Called when Armor Up is selected.
     public void UpgradeArmor(float bonusHealth = 20f)
     {
         if (isDead)
@@ -109,6 +128,35 @@ public class PlayerHealth : MonoBehaviour
             if (sentry != null)
                 sentry.enabled = false;
         }
+
+        // Either character dying ends the run.
+        TriggerGameOver();
+    }
+
+    void TriggerGameOver()
+    {
+        if (gameOver)
+            return;
+
+        gameOver = true;
+
+        if (gameOverPanel != null)
+            gameOverPanel.SetActive(true);
+        else
+            Debug.LogWarning("Game Over Panel is not assigned!");
+
+        Time.timeScale = 0f;
+
+        Debug.Log("GAME OVER! Press R to restart.");
+    }
+
+    void RestartGame()
+    {
+        Time.timeScale = 1f;
+
+        SceneManager.LoadScene(
+            SceneManager.GetActiveScene().buildIndex
+        );
     }
 
     public bool IsDead()
