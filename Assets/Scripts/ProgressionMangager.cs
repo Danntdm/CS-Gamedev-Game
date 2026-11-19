@@ -65,6 +65,18 @@ public class ProgressionManager : MonoBehaviour
         TryOpenUpgrade();
     }
 
+    // Totems use the same upgrade queue as level-ups without adding XP or a kill.
+    public bool TryQueueUpgrade()
+    {
+        if (!isActiveAndEnabled || upgradeManager == null ||
+            !upgradeManager.isActiveAndEnabled || upgradeManager.upgradePanel == null)
+            return false;
+
+        pendingUpgrades++;
+        TryOpenUpgrade();
+        return true;
+    }
+
     void TryOpenUpgrade()
     {
         if (waitingForUpgrade ||

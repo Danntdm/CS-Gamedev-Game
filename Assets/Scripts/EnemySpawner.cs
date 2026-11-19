@@ -176,22 +176,32 @@ public class EnemySpawner : MonoBehaviour
             return;
         }
 
-        bool spawnRanged =
-            Random.Range(0f, 100f) < currentRangedChance;
+        const int maxMeleeEnemies = 17;
+        const int maxRangedEnemies = 8;
+        int meleeCount = 0;
+        int rangedCount = 0;
 
-        GameObject selectedPrefab =
-            spawnRanged ? rangedEnemyPrefab : meleeEnemyPrefab;
-
-        if (selectedPrefab == null)
+        for (int i = 0; i < transform.childCount; i++)
         {
-            selectedPrefab =
-                spawnRanged ? meleeEnemyPrefab : rangedEnemyPrefab;
+            Transform enemy = transform.GetChild(i);
+            if (!enemy.gameObject.activeInHierarchy)
+                continue;
+
+            if (enemy.GetComponent<RangedEnemyController>() != null)
+                rangedCount++;
+            else if (enemy.GetComponent<EnemyController>() != null)
+                meleeCount++;
         }
 
-        if (selectedPrefab == null)
+        bool canSpawnMelee = meleeEnemyPrefab != null && meleeCount < maxMeleeEnemies;
+        bool canSpawnRanged = rangedEnemyPrefab != null && rangedCount < maxRangedEnemies;
+
+        if (!canSpawnMelee && !canSpawnRanged)
             return;
 
-        bool isRanged = selectedPrefab == rangedEnemyPrefab;
+        bool isRanged = canSpawnRanged &&
+            (!canSpawnMelee || Random.Range(0f, 100f) < currentRangedChance);
+        GameObject selectedPrefab = isRanged ? rangedEnemyPrefab : meleeEnemyPrefab;
 
         int attempts = Mathf.Max(1, maximumSpawnAttempts);
 
