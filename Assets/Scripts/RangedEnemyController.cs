@@ -54,6 +54,9 @@ public class RangedEnemyController : MonoBehaviour
     private EnemyHealthDrop healthDrop;
     private ProgressionManager progressionManager;
 
+    // NEW: White damage flash.
+    private EnemyHitFlash hitFlash;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
@@ -63,6 +66,9 @@ public class RangedEnemyController : MonoBehaviour
         currentHealth = maxHealth;
         hoverOffset = Random.Range(0f, Mathf.PI * 2f);
         healthDrop = GetComponent<EnemyHealthDrop>();
+
+        // NEW: Find the flash component.
+        hitFlash = GetComponent<EnemyHitFlash>();
     }
 
     void Start()
@@ -289,7 +295,14 @@ public class RangedEnemyController : MonoBehaviour
         currentHealth -= damage;
 
         if (currentHealth <= 0f)
+        {
             Die();
+            return;
+        }
+
+        // NEW: Flash white on nonlethal hits.
+        if (hitFlash != null)
+            hitFlash.Flash();
     }
 
     void Die()

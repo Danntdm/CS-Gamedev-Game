@@ -55,6 +55,9 @@ public class EnemyController : MonoBehaviour
     private EnemyHealthDrop healthDrop;
     private ProgressionManager progressionManager;
 
+    // NEW: White damage flash.
+    private EnemyHitFlash hitFlash;
+
     private Transform mecha;
     private Transform pilot;
     private Transform currentTarget;
@@ -69,6 +72,9 @@ public class EnemyController : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         agent = GetComponent<NavMeshAgent>();
         healthDrop = GetComponent<EnemyHealthDrop>();
+
+        // NEW: Find the flash component.
+        hitFlash = GetComponent<EnemyHitFlash>();
 
         rb.isKinematic = true;
         rb.useGravity = false;
@@ -302,7 +308,14 @@ public class EnemyController : MonoBehaviour
         currentHealth -= damage;
 
         if (currentHealth <= 0f)
+        {
             Die();
+            return;
+        }
+
+        // NEW: Flash white on nonlethal hits.
+        if (hitFlash != null)
+            hitFlash.Flash();
     }
 
     void Die()

@@ -3508,6 +3508,11 @@ MonoBehaviour:
   upgradeManager: {fileID: 2003641475}
   startingXPRequirement: 100
   additionalXPPerLevel: 50
+  upgradeEffectPrefab: {fileID: 5112403345868107898, guid: 6f34ef0d986e9db4199cf75805f79753, type: 3}
+  mechaTransform: {fileID: 2024007188}
+  effectHeight: 1
+  effectLifetime: 1
+  mechaUpgradeFlash: {fileID: 2024007198}
   currentLevel: 1
   currentXP: 0
   xpRequired: 100
@@ -32189,6 +32194,12 @@ MonoBehaviour:
   enterDistance: 3
   interactionCooldown: 0.3
   pilotRegenRate: 5
+  ejectionEffectPrefab: {fileID: 141433446842962269, guid: 9fe8f8b3288e45a44af36ff8aa04486e, type: 3}
+  ejectionEffectHeight: 3
+  ejectionEffectLifetime: 2
+  reentryEffectPrefab: {fileID: 1141330259687333427, guid: 6718dc24203da53468af9ada8fef7d6d, type: 3}
+  reentryEffectHeight: 3
+  reentryEffectLifetime: 2
 --- !u!4 &1076467855
 Transform:
   m_ObjectHideFlags: 0
@@ -62050,6 +62061,7 @@ GameObject:
   - component: {fileID: 2024007195}
   - component: {fileID: 2024007196}
   - component: {fileID: 2024007197}
+  - component: {fileID: 2024007198}
   m_Layer: 0
   m_Name: Mecha
   m_TagString: Player
@@ -62238,6 +62250,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MechaAim
   mainCamera: {fileID: 330585545}
   rotationSpeed: 15
+  deadzoneEnterRadius: 60
+  deadzoneExitRadius: 85
 --- !u!114 &2024007194
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -62301,6 +62315,7 @@ MonoBehaviour:
   detectionRange: 25
   rotationSpeed: 12
   fireRate: 0.1
+  firingAngle: 10
 --- !u!114 &2024007197
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -62321,6 +62336,20 @@ MonoBehaviour:
   runAnimation: Run_gunMiddle_AR
   shootingAnimation: Shoot_A_AR
   shootingAnimationDuration: 0.25
+--- !u!114 &2024007198
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2024007184}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6aa150bfe85fcb446b985e3467276fa5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyHitFlash
+  flashMaterial: {fileID: 2100000, guid: bbb31ca531d4d1d40b243864fa1524fb, type: 2}
+  flashDuration: 0.15
 --- !u!1001 &2026679029
 PrefabInstance:
   m_ObjectHideFlags: 0

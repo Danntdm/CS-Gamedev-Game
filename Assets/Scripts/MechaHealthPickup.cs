@@ -9,6 +9,11 @@ public class MechaHealthPickup : MonoBehaviour
     [Header("Appearance")]
     public float rotationSpeed = 90f;
 
+    [Header("Healing Effect")]
+    public GameObject healingEffectPrefab;
+    public float effectHeight = 1f;
+    public float effectLifetime = 2f;
+
     void Update()
     {
         transform.Rotate(
@@ -32,10 +37,31 @@ public class MechaHealthPickup : MonoBehaviour
         if (health == null || health.IsDead())
             return;
 
+        // Restore the mecha's health.
         health.Heal(healAmount);
+
+        // Spawn the healing effect around the mecha.
+        SpawnHealingEffect(movement.transform);
 
         Debug.Log("MECHA REPAIRED!");
 
         Destroy(gameObject);
+    }
+
+    void SpawnHealingEffect(Transform mecha)
+    {
+        if (healingEffectPrefab == null)
+            return;
+
+        Vector3 effectPosition = mecha.position;
+        effectPosition.y += effectHeight;
+
+        GameObject effect = Instantiate(
+            healingEffectPrefab,
+            effectPosition,
+            Quaternion.identity
+        );
+
+        Destroy(effect, effectLifetime);
     }
 }

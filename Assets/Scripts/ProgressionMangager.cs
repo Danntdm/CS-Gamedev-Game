@@ -10,6 +10,15 @@ public class ProgressionManager : MonoBehaviour
     public int startingXPRequirement = 100;
     public int additionalXPPerLevel = 50;
 
+    [Header("Upgrade Effect")]
+    public GameObject upgradeEffectPrefab;
+    public Transform mechaTransform;
+    public float effectHeight = 1f;
+    public float effectLifetime = 2f;
+
+    [Header("Mecha Upgrade Flash")]
+    public EnemyHitFlash mechaUpgradeFlash;
+
     [Header("Current Progress (Read Only)")]
     [SerializeField] private int currentLevel = 1;
     [SerializeField] private int currentXP = 0;
@@ -65,11 +74,13 @@ public class ProgressionManager : MonoBehaviour
         TryOpenUpgrade();
     }
 
-    // Totems use the same upgrade queue as level-ups without adding XP or a kill.
+    // Totems use the same upgrade queue as level-ups.
     public bool TryQueueUpgrade()
     {
-        if (!isActiveAndEnabled || upgradeManager == null ||
-            !upgradeManager.isActiveAndEnabled || upgradeManager.upgradePanel == null)
+        if (!isActiveAndEnabled ||
+            upgradeManager == null ||
+            !upgradeManager.isActiveAndEnabled ||
+            upgradeManager.upgradePanel == null)
             return false;
 
         pendingUpgrades++;
@@ -94,9 +105,38 @@ public class ProgressionManager : MonoBehaviour
         if (!waitingForUpgrade)
             return;
 
-        pendingUpgrades = Mathf.Max(0, pendingUpgrades - 1);
+        // Play the surrounding upgrade particles.
+        SpawnUpgradeEffect();
+
+        // NEW: Flash the mecha blue.
+        if (mechaUpgradeFlash != null)
+            mechaUpgradeFlash.Flash();
+
+        pendingUpgrades = Mathf.Max(
+            0,
+            pendingUpgrades - 1
+        );
+
         waitingForUpgrade = false;
 
         TryOpenUpgrade();
+    }
+
+    void SpawnUpgradeEffect()
+    {
+        if (upgradeEffectPrefab == null ||
+            mechaTransform == null)
+            return;
+
+        Vector3 effectPosition = mechaTransform.position;
+        effectPosition.y += effectHeight;
+
+        GameObject effect = Instantiate(
+            upgradeEffectPrefab,
+            effectPosition,
+            Quaternion.identity
+        );
+
+        Destroy(effect, effectLifetime);
     }
 }

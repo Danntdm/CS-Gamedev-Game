@@ -17,6 +17,16 @@ public class PilotEjection : MonoBehaviour
     [Header("Pilot Regeneration")]
     public float pilotRegenRate = 5f;
 
+    [Header("Ejection Effect")]
+    public GameObject ejectionEffectPrefab;
+    public float ejectionEffectHeight = 1f;
+    public float ejectionEffectLifetime = 2f;
+
+    [Header("Reentry Effect")]
+    public GameObject reentryEffectPrefab;
+    public float reentryEffectHeight = 1f;
+    public float reentryEffectLifetime = 2f;
+
     private bool insideMecha = true;
     private float nextInteractionTime;
 
@@ -126,6 +136,13 @@ public class PilotEjection : MonoBehaviour
 
         pilotMovement.enabled = true;
 
+        // NEW: Play ejection effect.
+        SpawnEffect(
+            ejectionEffectPrefab,
+            ejectionEffectHeight,
+            ejectionEffectLifetime
+        );
+
         // Follow pilot.
         cameraFollow.target = pilot.transform;
 
@@ -156,6 +173,13 @@ public class PilotEjection : MonoBehaviour
 
         insideMecha = true;
 
+        // NEW: Play reentry effect before hiding pilot.
+        SpawnEffect(
+            reentryEffectPrefab,
+            reentryEffectHeight,
+            reentryEffectLifetime
+        );
+
         // Disable Sentry Mode.
         mechaSentry.enabled = false;
 
@@ -175,5 +199,25 @@ public class PilotEjection : MonoBehaviour
             Time.time + interactionCooldown;
 
         Debug.Log("PILOT ENTERED MECHA - MANUAL CONTROL");
+    }
+
+    void SpawnEffect(
+        GameObject effectPrefab,
+        float height,
+        float lifetime)
+    {
+        if (effectPrefab == null)
+            return;
+
+        Vector3 effectPosition = mecha.transform.position;
+        effectPosition.y += height;
+
+        GameObject effect = Instantiate(
+            effectPrefab,
+            effectPosition,
+            Quaternion.identity
+        );
+
+        Destroy(effect, lifetime);
     }
 }
