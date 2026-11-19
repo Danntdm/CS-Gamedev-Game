@@ -9,6 +9,11 @@ public class MechaWeapon : MonoBehaviour
     public Transform firePoint;
     public float fireRate = 0.15f;
 
+    [Header("Muzzle Flash")]
+    public GameObject muzzleFlashPrefab;
+    public Transform muzzleFlashSpawn;
+    public float muzzleFlashLifetime = 0.05f;
+
     [Header("Damage")]
     public float bulletDamage = 10f;
     public float damageUpgradeMultiplier = 1.2f;
@@ -97,10 +102,26 @@ public class MechaWeapon : MonoBehaviour
 
         IgnoreMechaCollision(bullet);
 
+        SpawnMuzzleFlash();
+
         if (mechaAnimator != null)
             mechaAnimator.PlayShootAnimation();
 
         nextFireTime = Time.time + fireRate;
+    }
+
+    void SpawnMuzzleFlash()
+    {
+        if (muzzleFlashPrefab == null || muzzleFlashSpawn == null)
+            return;
+
+        GameObject flash = Instantiate(
+            muzzleFlashPrefab,
+            muzzleFlashSpawn.position,
+            muzzleFlashSpawn.rotation
+        );
+
+        Destroy(flash, muzzleFlashLifetime);
     }
 
     Vector3 GetMouseTarget()

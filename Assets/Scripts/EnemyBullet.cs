@@ -10,6 +10,10 @@ public class EnemyBullet : MonoBehaviour
     public float damage = 10f;
     public float lifetime = 5f;
 
+    [Header("Impact Effect")]
+    public GameObject impactEffectPrefab;
+    public float impactEffectLifetime = 1f;
+
     private Rigidbody rb;
     private bool hasHit;
 
@@ -53,6 +57,9 @@ public class EnemyBullet : MonoBehaviour
         if (playerHealth != null)
         {
             hasHit = true;
+
+            SpawnImpact(other);
+
             playerHealth.TakeDamage(damage);
             Destroy(gameObject);
             return;
@@ -64,6 +71,32 @@ public class EnemyBullet : MonoBehaviour
 
         // Hit a wall, building, or other solid object.
         hasHit = true;
+
+        SpawnImpact(other);
+
         Destroy(gameObject);
+    }
+
+    void SpawnImpact(Collider hitCollider)
+    {
+        if (impactEffectPrefab == null)
+            return;
+
+        // Find the closest point on the object hit.
+        Vector3 impactPosition =
+            hitCollider.ClosestPoint(transform.position);
+
+        // Spawn the effect independently of the bullet.
+        GameObject impact = Instantiate(
+            impactEffectPrefab,
+            impactPosition,
+            Quaternion.identity
+        );
+
+        // Clean up the effect after its lifetime.
+        Destroy(
+            impact,
+            Mathf.Max(0.01f, impactEffectLifetime)
+        );
     }
 }

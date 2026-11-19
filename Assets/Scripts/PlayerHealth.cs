@@ -18,6 +18,14 @@ public class PlayerHealth : MonoBehaviour
     [Header("Game Over")]
     public GameObject gameOverPanel;
 
+    [Header("Damage Feedback")]
+    public DamageFlash damageFlash;
+
+    [Header("Death Explosion")]
+    public GameObject deathExplosionPrefab;
+    public float explosionHeight = 1f;
+    public float explosionLifetime = 5f;
+
     private float currentHealth;
     private bool isDead;
     private bool gameOver;
@@ -44,11 +52,15 @@ public class PlayerHealth : MonoBehaviour
 
     public void TakeDamage(float damage)
     {
-        if (isDead)
+        if (isDead || damage <= 0f)
             return;
 
         currentHealth = Mathf.Max(0f, currentHealth - damage);
         UpdateHealthBar();
+
+        // Flash red whenever the player takes damage.
+        if (damageFlash != null)
+            damageFlash.Flash();
 
         if (currentHealth <= 0f)
             Die();
@@ -93,7 +105,13 @@ public class PlayerHealth : MonoBehaviour
 
     void Die()
     {
+        if (isDead)
+            return;
+
         isDead = true;
+
+        // Spawn explosion before pausing the game.
+        SpawnDeathExplosion();
 
         if (isPilot)
         {
@@ -107,6 +125,12 @@ public class PlayerHealth : MonoBehaviour
         else
         {
             Debug.Log("MECHA DESTROYED!");
+
+            // Hide the mecha model without disabling PlayerHealth.
+            foreach (Renderer renderer in GetComponentsInChildren<Renderer>())
+            {
+                renderer.enabled = false;
+            }
 
             MechaMovement movement = GetComponent<MechaMovement>();
 
@@ -131,6 +155,43 @@ public class PlayerHealth : MonoBehaviour
 
         // Either character dying ends the run.
         TriggerGameOver();
+    }
+
+    void SpawnDeathExplosion()
+    {
+        if (deathExplosionPrefab == null)
+            return;
+
+        Vector3 explosionPosition = transform.position;
+        explosionPosition.y += explosionHeight;
+
+        GameObject explosion = Instantiate(
+            deathExplosionPrefab,
+            explosionPosition,
+            Quaternion.identity
+        );
+
+        // Allow particles to animate while the game is paused.
+        ParticleSystem[] particles =
+            explosion.GetComponentsInChildren<ParticleSystem>(true);
+
+        foreach (ParticleSystem particle in particles)
+        {
+            var main = particle.main;
+            main.useUnscaledTime = true;
+        }
+
+        // Cleanup using real time, unaffected by pause.
+        StartCoroutine(DestroyExplosionAfterDelay(explosion));
+    }
+
+    System.Collections.IEnumerator DestroyExplosionAfterDelay(
+        GameObject explosion)
+    {
+        yield return new WaitForSecondsRealtime(explosionLifetime);
+
+        if (explosion != null)
+            Destroy(explosion);
     }
 
     void TriggerGameOver()

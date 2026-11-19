@@ -10,6 +10,10 @@ public class RangedEnemyController : MonoBehaviour
     [Header("XP Reward")]
     public int xpReward = 20;
 
+    [Header("Death Explosion")]
+    public GameObject deathExplosionPrefab;
+    public float explosionHeight = 0f;
+
     [Header("Movement")]
     public float moveSpeed = 6f;
     public float rotationSpeed = 5f;
@@ -295,9 +299,24 @@ public class RangedEnemyController : MonoBehaviour
 
         isDead = true;
 
+        // Spawn explosion at the flying enemy's position.
+        if (deathExplosionPrefab != null)
+        {
+            Vector3 explosionPosition = transform.position;
+            explosionPosition.y += explosionHeight;
+
+            Instantiate(
+                deathExplosionPrefab,
+                explosionPosition,
+                Quaternion.identity
+            );
+        }
+
+        // Preserve XP rewards.
         if (progressionManager != null)
             progressionManager.RegisterKill(xpReward);
 
+        // Preserve health pickups.
         if (healthDrop != null)
             healthDrop.TryDropHealth();
 

@@ -4,9 +4,14 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class Bullet : MonoBehaviour
 {
+    [Header("Bullet")]
     public float speed = 35f;
     public float lifetime = 3f;
     public float damage = 10f;
+
+    [Header("Impact Effect")]
+    public GameObject impactEffectPrefab;
+    public float impactEffectLifetime = 1f;
 
     private Rigidbody rb;
     private bool hasHit;
@@ -46,6 +51,9 @@ public class Bullet : MonoBehaviour
         if (meleeEnemy != null)
         {
             hasHit = true;
+
+            SpawnImpact(other);
+
             meleeEnemy.TakeDamage(damage);
             Destroy(gameObject);
             return;
@@ -58,6 +66,9 @@ public class Bullet : MonoBehaviour
         if (rangedEnemy != null)
         {
             hasHit = true;
+
+            SpawnImpact(other);
+
             rangedEnemy.TakeDamage(damage);
             Destroy(gameObject);
             return;
@@ -67,8 +78,34 @@ public class Bullet : MonoBehaviour
         if (other.isTrigger)
             return;
 
-        // Destroy the bullet when hitting a solid obstacle.
+        // Hit a solid obstacle.
         hasHit = true;
+
+        SpawnImpact(other);
+
         Destroy(gameObject);
+    }
+
+    void SpawnImpact(Collider hitCollider)
+    {
+        if (impactEffectPrefab == null)
+            return;
+
+        // Find the point on the collider closest to the bullet.
+        Vector3 impactPosition =
+            hitCollider.ClosestPoint(transform.position);
+
+        // Create the effect independently of the bullet.
+        GameObject impact = Instantiate(
+            impactEffectPrefab,
+            impactPosition,
+            Quaternion.identity
+        );
+
+        // Remove the effect after its lifetime.
+        Destroy(
+            impact,
+            Mathf.Max(0.01f, impactEffectLifetime)
+        );
     }
 }

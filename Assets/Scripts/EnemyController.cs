@@ -12,6 +12,10 @@ public class EnemyController : MonoBehaviour
     [Header("XP Reward")]
     public int xpReward = 10;
 
+    [Header("Death Explosion")]
+    public GameObject deathExplosionPrefab;
+    public float explosionHeight = 1f;
+
     [Header("Attack")]
     public float contactDamage = 10f;
     public float damageInterval = 1f;
@@ -68,7 +72,6 @@ public class EnemyController : MonoBehaviour
 
         rb.isKinematic = true;
         rb.useGravity = false;
-
         agent.updateRotation = false;
 
         if (enemyAnimator == null)
@@ -309,11 +312,24 @@ public class EnemyController : MonoBehaviour
 
         isDead = true;
 
+        // Spawn the explosion independently of the enemy.
+        if (deathExplosionPrefab != null)
+        {
+            Vector3 explosionPosition = transform.position;
+            explosionPosition.y += explosionHeight;
+
+            Instantiate(
+                deathExplosionPrefab,
+                explosionPosition,
+                Quaternion.identity
+            );
+        }
+
         // Award XP once per enemy death.
         if (progressionManager != null)
             progressionManager.RegisterKill(xpReward);
 
-        // Preserve the existing repair pickup system.
+        // Preserve health pickup drops.
         if (healthDrop != null)
             healthDrop.TryDropHealth();
 

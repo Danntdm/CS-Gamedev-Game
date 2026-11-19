@@ -192,6 +192,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyController
   maxHealth: 20
   xpReward: 10
+  deathExplosionPrefab: {fileID: 8194992990867289339, guid: 99bc28c0d45f51c4fbac01080b73edc7, type: 3}
+  explosionHeight: 1
   contactDamage: 10
   damageInterval: 1
   attackRange: 5

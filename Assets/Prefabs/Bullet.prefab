@@ -156,3 +156,5 @@ MonoBehaviour:
   speed: 35
   lifetime: 3
   damage: 15
+  impactEffectPrefab: {fileID: 5880797563127281583, guid: 265d3a5ba69981a4698ceabcedf368b0, type: 3}
+  impactEffectLifetime: 1

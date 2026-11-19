@@ -129,6 +129,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RangedEnemyController
   maxHealth: 30
   xpReward: 20
+  deathExplosionPrefab: {fileID: 725748389856807714, guid: 4bda94453d2ca7444a0fff05b2d425f5, type: 3}
+  explosionHeight: 0
   moveSpeed: 6
   rotationSpeed: 5
   preferredDistance: 15
