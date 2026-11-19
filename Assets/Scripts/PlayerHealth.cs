@@ -30,6 +30,15 @@ public class PlayerHealth : MonoBehaviour
     private bool isDead;
     private bool gameOver;
 
+    private MechaSentry mechaSentry;
+
+    void Awake()
+    {
+        // Only the mecha needs a sentry reference.
+        if (!isPilot)
+            mechaSentry = GetComponent<MechaSentry>();
+    }
+
     void Start()
     {
         Time.timeScale = 1f;
@@ -55,10 +64,24 @@ public class PlayerHealth : MonoBehaviour
         if (isDead || damage <= 0f)
             return;
 
-        currentHealth = Mathf.Max(0f, currentHealth - damage);
+        // SENTRY INVULNERABILITY
+        // Mecha cannot take damage when its
+        // autonomous sentry component is active.
+        // Pilot health is unaffected.
+        if (!isPilot &&
+            mechaSentry != null &&
+            mechaSentry.isActiveAndEnabled)
+        {
+            return;
+        }
+
+        currentHealth = Mathf.Max(
+            0f,
+            currentHealth - damage
+        );
+
         UpdateHealthBar();
 
-        // Flash red whenever the player takes damage.
         if (damageFlash != null)
             damageFlash.Flash();
 
@@ -71,7 +94,11 @@ public class PlayerHealth : MonoBehaviour
         if (isDead || amount <= 0f)
             return;
 
-        currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
+        currentHealth = Mathf.Min(
+            maxHealth,
+            currentHealth + amount
+        );
+
         UpdateHealthBar();
     }
 
@@ -100,7 +127,11 @@ public class PlayerHealth : MonoBehaviour
         healthBar.value = currentHealth;
 
         if (healthBar.fillRect != null)
-            healthBar.fillRect.gameObject.SetActive(currentHealth > 0f);
+        {
+            healthBar.fillRect.gameObject.SetActive(
+                currentHealth > 0f
+            );
+        }
     }
 
     void Die()
@@ -110,14 +141,14 @@ public class PlayerHealth : MonoBehaviour
 
         isDead = true;
 
-        // Spawn explosion before pausing the game.
         SpawnDeathExplosion();
 
         if (isPilot)
         {
             Debug.Log("PILOT KILLED!");
 
-            PilotMovement movement = GetComponent<PilotMovement>();
+            PilotMovement movement =
+                GetComponent<PilotMovement>();
 
             if (movement != null)
                 movement.enabled = false;
@@ -126,34 +157,37 @@ public class PlayerHealth : MonoBehaviour
         {
             Debug.Log("MECHA DESTROYED!");
 
-            // Hide the mecha model without disabling PlayerHealth.
-            foreach (Renderer renderer in GetComponentsInChildren<Renderer>())
+            foreach (Renderer renderer in
+                     GetComponentsInChildren<Renderer>())
             {
                 renderer.enabled = false;
             }
 
-            MechaMovement movement = GetComponent<MechaMovement>();
+            MechaMovement movement =
+                GetComponent<MechaMovement>();
 
             if (movement != null)
                 movement.enabled = false;
 
-            MechaAim aim = GetComponent<MechaAim>();
+            MechaAim aim =
+                GetComponent<MechaAim>();
 
             if (aim != null)
                 aim.enabled = false;
 
-            MechaWeapon weapon = GetComponent<MechaWeapon>();
+            MechaWeapon weapon =
+                GetComponent<MechaWeapon>();
 
             if (weapon != null)
                 weapon.enabled = false;
 
-            MechaSentry sentry = GetComponent<MechaSentry>();
+            MechaSentry sentry =
+                GetComponent<MechaSentry>();
 
             if (sentry != null)
                 sentry.enabled = false;
         }
 
-        // Either character dying ends the run.
         TriggerGameOver();
     }
 
@@ -171,9 +205,10 @@ public class PlayerHealth : MonoBehaviour
             Quaternion.identity
         );
 
-        // Allow particles to animate while the game is paused.
         ParticleSystem[] particles =
-            explosion.GetComponentsInChildren<ParticleSystem>(true);
+            explosion.GetComponentsInChildren<ParticleSystem>(
+                true
+            );
 
         foreach (ParticleSystem particle in particles)
         {
@@ -181,14 +216,17 @@ public class PlayerHealth : MonoBehaviour
             main.useUnscaledTime = true;
         }
 
-        // Cleanup using real time, unaffected by pause.
-        StartCoroutine(DestroyExplosionAfterDelay(explosion));
+        StartCoroutine(
+            DestroyExplosionAfterDelay(explosion)
+        );
     }
 
     System.Collections.IEnumerator DestroyExplosionAfterDelay(
         GameObject explosion)
     {
-        yield return new WaitForSecondsRealtime(explosionLifetime);
+        yield return new WaitForSecondsRealtime(
+            explosionLifetime
+        );
 
         if (explosion != null)
             Destroy(explosion);
@@ -204,7 +242,9 @@ public class PlayerHealth : MonoBehaviour
         if (gameOverPanel != null)
             gameOverPanel.SetActive(true);
         else
-            Debug.LogWarning("Game Over Panel is not assigned!");
+            Debug.LogWarning(
+                "Game Over Panel is not assigned!"
+            );
 
         Time.timeScale = 0f;
 

@@ -40243,6 +40243,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1692627203}
+  - {fileID: 1668832057}
   m_Father: {fileID: 2024007188}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &1328606148
@@ -50576,6 +50577,37 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 17.891638, y: 9.053619, z: 12.602821}
   m_Center: {x: -0.56064415, y: 4.5260267, z: -0.13327432}
+--- !u!1 &1668832056
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1668832057}
+  m_Layer: 0
+  m_Name: MuzzleFlashSpawn
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1668832057
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1668832056}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 0.01, y: 0.22, z: 0.471}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1328606147}
+  m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
 --- !u!4 &1670204568 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: 11b412f2ff905c341be6af606611e4a3, type: 3}
@@ -62221,7 +62253,8 @@ MonoBehaviour:
   bulletPrefab: {fileID: 398294110879698603, guid: 15db2694ae1ab914fa3f34845aa4f8e1, type: 3}
   firePoint: {fileID: 1692627203}
   fireRate: 0.25
-  muzzleFlashPrefab: {fileID: 100000, guid: 4d1f8bf3fbf1b454ba9dbdb8afbe0882, type: 3}
+  muzzleFlashPrefab: {fileID: 869393922875930846, guid: ac455540ae3c7df49bf4bc487461bc66, type: 3}
+  muzzleFlashSpawn: {fileID: 1668832057}
   muzzleFlashLifetime: 0.05
   bulletDamage: 10
   damageUpgradeMultiplier: 1.2

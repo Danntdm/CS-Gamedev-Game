@@ -14,14 +14,17 @@ public class MechaSentry : MonoBehaviour
     [Header("Combat")]
     public float rotationSpeed = 12f;
     public float fireRate = 0.25f;
+    public float firingAngle = 10f;
 
     private float nextFireTime;
     private Transform currentTarget;
     private Rigidbody rb;
+    private MechaAnimator animationController;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        animationController = GetComponent<MechaAnimator>();
     }
 
     void OnEnable()
@@ -35,17 +38,13 @@ public class MechaSentry : MonoBehaviour
         FindClosestEnemy();
 
         if (currentTarget != null)
-        {
             ShootAtEnemy();
-        }
     }
 
     void FixedUpdate()
     {
         if (currentTarget != null)
-        {
             AimAtEnemy();
-        }
     }
 
     void FindClosestEnemy()
@@ -60,10 +59,15 @@ public class MechaSentry : MonoBehaviour
 
         foreach (EnemyController enemy in enemies)
         {
-            float distance = Vector3.Distance(
-                transform.position,
-                enemy.transform.position
-            );
+            if (enemy == null || !enemy.isActiveAndEnabled)
+                continue;
+
+            Vector3 offset =
+                enemy.transform.position - transform.position;
+
+            offset.y = 0f;
+
+            float distance = offset.magnitude;
 
             if (distance < closestDistance)
             {
@@ -84,7 +88,7 @@ public class MechaSentry : MonoBehaviour
             return;
 
         Quaternion targetRotation =
-            Quaternion.LookRotation(direction);
+            Quaternion.LookRotation(direction.normalized);
 
         Quaternion newRotation = Quaternion.Slerp(
             rb.rotation,
@@ -103,38 +107,61 @@ public class MechaSentry : MonoBehaviour
         if (bulletPrefab == null || firePoint == null)
             return;
 
-        Vector3 direction =
+        // Check facing direction from the mecha's
+        // center, matching its rotation calculation.
+        Vector3 aimDirection =
+            currentTarget.position - transform.position;
+
+        aimDirection.y = 0f;
+
+        if (aimDirection.sqrMagnitude > 0.001f)
+        {
+            float angle = Vector3.Angle(
+                transform.forward,
+                aimDirection.normalized
+            );
+
+            if (angle > firingAngle)
+                return;
+        }
+
+        // Calculate bullet direction from the gun
+        // so projectiles originate at FirePoint.
+        Vector3 bulletDirection =
             currentTarget.position - firePoint.position;
 
-        direction.y = 0f;
+        bulletDirection.y = 0f;
 
-        if (direction.sqrMagnitude < 0.001f)
+        // Fallback for extremely close targets.
+        if (bulletDirection.sqrMagnitude < 0.001f)
+            bulletDirection = transform.forward;
+
+        if (bulletDirection.sqrMagnitude < 0.001f)
             return;
 
-        // Only fire when facing the enemy.
-        if (Vector3.Angle(transform.forward, direction) > 10f)
-            return;
+        Quaternion bulletRotation = Quaternion.LookRotation(
+            bulletDirection.normalized,
+            Vector3.up
+        );
 
         GameObject bullet = Instantiate(
             bulletPrefab,
             firePoint.position,
-            firePoint.rotation
+            bulletRotation
         );
-        MechaAnimator animationController =
-        GetComponent<MechaAnimator>();
 
         if (animationController != null)
             animationController.PlayShootAnimation();
 
-        // Prevent bullets from hitting the mech.
-        Collider bulletCollider =
-            bullet.GetComponent<Collider>();
+        // Prevent bullet collisions with the mecha.
+        Collider[] bulletColliders =
+            bullet.GetComponentsInChildren<Collider>();
 
-        if (bulletCollider != null)
+        Collider[] mechColliders =
+            GetComponentsInChildren<Collider>();
+
+        foreach (Collider bulletCollider in bulletColliders)
         {
-            Collider[] mechColliders =
-                GetComponentsInChildren<Collider>();
-
             foreach (Collider mechCollider in mechColliders)
             {
                 Physics.IgnoreCollision(

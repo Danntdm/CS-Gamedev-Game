@@ -28,18 +28,35 @@ public class MechaWeapon : MonoBehaviour
 
     private float nextFireTime;
     private MechaAnimator mechaAnimator;
+    private MechaAim mechaAim;
     private Camera mainCamera;
+
+    private Vector3 lastValidFireDirection;
 
     void Awake()
     {
         mechaAnimator = GetComponent<MechaAnimator>();
+        mechaAim = GetComponent<MechaAim>();
         mainCamera = Camera.main;
+
+        // Default direction before any mouse aiming.
+        lastValidFireDirection = transform.forward;
+        lastValidFireDirection.y = 0f;
+
+        if (lastValidFireDirection.sqrMagnitude < 0.001f)
+            lastValidFireDirection = Vector3.forward;
+
+        lastValidFireDirection.Normalize();
     }
 
     void Update()
     {
         if (Mouse.current == null)
             return;
+
+        // Remember the valid firing direction while
+        // the mouse is outside the deadzone.
+        UpdateFireDirection();
 
         if (Mouse.current.leftButton.isPressed &&
             Time.time >= nextFireTime)
@@ -48,11 +65,48 @@ public class MechaWeapon : MonoBehaviour
         }
     }
 
+
+    void UpdateFireDirection()
+    {
+        if (firePoint == null)
+            return;
+
+        // Inside the deadzone, use the mecha's
+        // remembered aim instead of the cursor.
+        if (mechaAim != null && mechaAim.IsInDeadzone)
+        {
+            Vector3 direction = mechaAim.AimDirection;
+            direction.y = 0f;
+
+            if (direction.sqrMagnitude > 0.001f)
+                lastValidFireDirection = direction.normalized;
+
+            return;
+        }
+
+        // Outside the deadzone, aim normally.
+        Vector3 targetPoint = GetMouseTarget();
+
+        Vector3 fireDirection =
+            targetPoint - firePoint.position;
+
+        fireDirection.y = 0f;
+
+        if (fireDirection.sqrMagnitude < 0.001f)
+            return;
+
+        lastValidFireDirection = fireDirection.normalized;
+    }
+
+
     public void UpgradeDamage()
     {
         bulletDamage *= damageUpgradeMultiplier;
 
-        Debug.Log("MECHA DAMAGE UPGRADED! New damage: " + bulletDamage);
+        Debug.Log(
+            "MECHA DAMAGE UPGRADED! New damage: " +
+            bulletDamage
+        );
     }
 
     public void UpgradeFireRate()
@@ -62,7 +116,10 @@ public class MechaWeapon : MonoBehaviour
             fireRate / fireSpeedUpgradeMultiplier
         );
 
-        Debug.Log("RAPID FIRE UPGRADED! New fire interval: " + fireRate);
+        Debug.Log(
+            "RAPID FIRE UPGRADED! New fire interval: " +
+            fireRate
+        );
     }
 
     void Fire()
@@ -70,16 +127,8 @@ public class MechaWeapon : MonoBehaviour
         if (bulletPrefab == null || firePoint == null)
             return;
 
-        Vector3 targetPoint = GetMouseTarget();
-
-        Vector3 direction = targetPoint - firePoint.position;
+        Vector3 direction = lastValidFireDirection;
         direction.y = 0f;
-
-        if (direction.sqrMagnitude < 0.001f)
-        {
-            direction = transform.forward;
-            direction.y = 0f;
-        }
 
         if (direction.sqrMagnitude < 0.001f)
             return;
@@ -112,7 +161,8 @@ public class MechaWeapon : MonoBehaviour
 
     void SpawnMuzzleFlash()
     {
-        if (muzzleFlashPrefab == null || muzzleFlashSpawn == null)
+        if (muzzleFlashPrefab == null ||
+            muzzleFlashSpawn == null)
             return;
 
         GameObject flash = Instantiate(
@@ -130,7 +180,8 @@ public class MechaWeapon : MonoBehaviour
             mainCamera = Camera.main;
 
         if (mainCamera == null || Mouse.current == null)
-            return firePoint.position + transform.forward * 30f;
+            return firePoint.position +
+                   transform.forward * 30f;
 
         Ray ray = mainCamera.ScreenPointToRay(
             Mouse.current.position.ReadValue()
@@ -168,12 +219,14 @@ public class MechaWeapon : MonoBehaviour
             return groundHit.point;
         }
 
-        Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
+        Plane groundPlane =
+            new Plane(Vector3.up, Vector3.zero);
 
         if (groundPlane.Raycast(ray, out float distance))
             return ray.GetPoint(distance);
 
-        return firePoint.position + transform.forward * 30f;
+        return firePoint.position +
+               transform.forward * 30f;
     }
 
     void IgnoreMechaCollision(GameObject bullet)
